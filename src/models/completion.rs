@@ -149,7 +149,7 @@ pub struct CompletionResponse {
 }
 
 /// A single completion choice.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Choice {
     /// The generated text.
     pub text: String,
@@ -167,20 +167,16 @@ pub struct Choice {
 }
 
 /// Log probabilities of the tokens.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Logprobs {
-    /// The tokens generated.
+    /// List of tokens
     pub tokens: Vec<String>,
-
-    /// The log probabilities of the tokens.
+    /// Log probability of each token
     pub token_logprobs: Vec<f32>,
-
-    /// The top log probabilities of tokens.
-    #[serde(default)]
-    pub top_logprobs: Option<Vec<HashMap<String, f32>>>,
-
-    /// The character offset of each token.
-    pub text_offset: Vec<u32>,
+    /// Indices of tokens in the text
+    pub text_offset: Vec<usize>,
+    /// Top logprobs for each token position
+    pub top_logprobs: Vec<HashMap<String, f32>>,
 }
 
 /// Usage statistics for the completion.

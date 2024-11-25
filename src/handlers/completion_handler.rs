@@ -1,14 +1,16 @@
-use crate::models::{Choice, CompletionRequest, CompletionResponse, Usage};
+use crate::models::{CompletionRequest, CompletionResponse, Usage};
 use crate::validators::{
     validate_temperature, validate_top_p, validate_n, validate_max_tokens,
     validate_presence_penalty, validate_frequency_penalty, validate_best_of,
     validate_logprobs, validate_stop,
 };
+use crate::validators::StopSequence;
 use crate::validators::validate_required_fields;
 use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
 use uuid::Uuid;
 use chrono::Utc;
+use crate::utils::choices::create_choices;
 
 pub async fn completions_handler(
     req: web::Json<CompletionRequest>,
@@ -56,16 +58,24 @@ pub async fn completions_handler(
     let prompt = req.prompt.clone().unwrap_or_default();
     let max_tokens = req.max_tokens.unwrap_or(16);
     let n = req.n.unwrap_or(1);
+    let echo = req.echo.unwrap_or(false);
+    let logprobs = req.logprobs;
     let created_time = Utc::now().timestamp() as u64;
 
-    let choices: Vec<Choice> = (0..n)
-        .map(|i| Choice {
-            text: format!("Mock response {} for prompt: {}", i + 1, prompt),
-            index: i,
-            logprobs: None,
-            finish_reason: Some("stop".to_string()),
-        })
-        .collect();
+    let stop_sequences = match &req.stop {
+        Some(StopSequence::Single(s)) => vec![s.clone()],
+        Some(StopSequence::Multiple(v)) => v.clone(),
+        None => Vec::new(),
+    };
+
+    let choices = create_choices(
+        n,
+        &prompt,
+        &stop_sequences,
+        max_tokens,
+        echo,
+        logprobs
+    );
 
     let response = CompletionResponse {
         id: format!("cmpl-mock-id-{}", Uuid::new_v4()),
