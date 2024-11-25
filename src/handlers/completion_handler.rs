@@ -8,8 +8,7 @@ use crate::validators::StopSequence;
 use crate::validators::validate_required_fields;
 use actix_web::{web, HttpResponse, Responder};
 use serde_json::json;
-use uuid::Uuid;
-use chrono::Utc;
+use crate::utils::utils::{generate_uuid, get_current_timestamp};
 use crate::utils::choices::create_choices;
 
 pub async fn completions_handler(
@@ -60,7 +59,6 @@ pub async fn completions_handler(
     let n = req.n.unwrap_or(1);
     let echo = req.echo.unwrap_or(false);
     let logprobs = req.logprobs;
-    let created_time = Utc::now().timestamp() as u64;
 
     let stop_sequences = match &req.stop {
         Some(StopSequence::Single(s)) => vec![s.clone()],
@@ -70,17 +68,18 @@ pub async fn completions_handler(
 
     let choices = create_choices(
         n,
-        &prompt,
+        &prompt.to_string(),
         &stop_sequences,
         max_tokens,
         echo,
-        logprobs
+        logprobs,
+        &req.model
     );
 
     let response = CompletionResponse {
-        id: format!("cmpl-mock-id-{}", Uuid::new_v4()),
+        id: format!("cmpl-mock-id-{}", generate_uuid()),
         object: "text_completion".to_string(),
-        created: created_time,
+        created: get_current_timestamp().timestamp() as u64,
         model: req.model.clone(),
         choices,
         usage: Usage {

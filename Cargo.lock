@@ -1330,6 +1330,7 @@ dependencies = [
  "actix-web",
  "chrono",
  "log",
+ "rand",
  "serde",
  "serde_json",
  "tiktoken-rs",

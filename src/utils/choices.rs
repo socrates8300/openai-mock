@@ -1,7 +1,9 @@
 use crate::models::completion::Choice;
-use crate::utils::token_counting::{count_tokens, truncate_to_tokens};
+use crate::utils::token_counting::TokenCounter;
 use std::collections::HashMap;
 use rand::{thread_rng, Rng};
+use crate::models::completion::Logprobs;
+
 
 impl Choice {
     pub fn new(index: i32, text: String, echo: bool, prompt: &str) -> Self {
@@ -70,7 +72,8 @@ impl Choice {
         stop_sequences: &[String],
         max_tokens: u32,
         echo: bool,
-        logprobs_n: Option<u32>
+        logprobs_n: Option<u32>,
+        model: &str
     ) {
         let mut generated = if echo {
             prompt.to_string()
@@ -87,13 +90,20 @@ impl Choice {
                 return;
             }
         }
-
-        // More robust token count estimation
-        let estimated_tokens = count_tokens(&generated);
-        if estimated_tokens >= max_tokens {
+        let token_counter = TokenCounter::new(&model);
+        match token_counter {
+            Ok(token_counter) => {
+                // More robust token count estimation
+                let estimated_tokens = token_counter.count_tokens(&generated);
+                if estimated_tokens >= max_tokens {
             self.finish_reason = Some("length".to_string());
-            self.text = truncate_to_tokens(&generated, max_tokens);
-            return;
+            self.text = token_counter.truncate_to_tokens(&generated, max_tokens);
+                    return;
+                }
+            },
+            Err(e) => {
+                eprintln!("Error creating token counter: {}", e);
+            }
         }
 
         self.text = generated;
@@ -112,13 +122,14 @@ pub fn create_choices(
     stop_sequences: &[String],
     max_tokens: u32,
     echo: bool,
-    logprobs: Option<u32>
+    logprobs: Option<u32>,
+    model: &str
 ) -> Vec<Choice> {
     let mut choices = Vec::with_capacity(n as usize);
 
     for i in 0..n {
         let mut choice = Choice::new(i, String::new(), echo, prompt);
-        choice.generate_text(prompt, stop_sequences, max_tokens, echo, logprobs);
+        choice.generate_text(prompt, stop_sequences, max_tokens, echo, logprobs, model);
         choices.push(choice);
     }
 
