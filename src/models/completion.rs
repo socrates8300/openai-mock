@@ -1,19 +1,27 @@
+//! This module defines the data structures for handling completion requests
+//! and responses in the API.
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use crate::validators::StopSequence;
 
-/// The request payload for the Completions API.
-#[derive(Debug, Deserialize)]
+/// Represents a request payload for the Completions API.
+///
+/// This structure includes various optional and required fields that
+/// configure the behavior of the text generation process.
+#[derive(Debug, Deserialize, Serialize)]
 pub struct CompletionRequest {
     /// ID of the model to use.
     pub model: String,
 
     /// The prompt(s) to generate completions for.
+    ///
+    /// Can be a string, an array of strings, or `null`.
     #[serde(default)]
-    pub prompt: Option<Value>, // Can be a string, array of strings, or null.
+    pub prompt: Option<Value>,
 
-    /// The suffix that comes after a completion of inserted text.
+    /// The suffix that comes after the generated completion.
     #[serde(default)]
     pub suffix: Option<String>,
 
@@ -21,7 +29,7 @@ pub struct CompletionRequest {
     #[serde(default = "default_max_tokens")]
     pub max_tokens: Option<u32>,
 
-    /// What sampling temperature to use.
+    /// Sampling temperature to use. Higher values make output more random.
     #[serde(default = "default_temperature")]
     pub temperature: Option<f32>,
 
@@ -29,7 +37,7 @@ pub struct CompletionRequest {
     #[serde(default = "default_top_p")]
     pub top_p: Option<f32>,
 
-    /// How many completions to generate for each prompt.
+    /// Number of completions to generate for each prompt.
     #[serde(default = "default_n")]
     pub n: Option<i32>,
 
@@ -37,7 +45,7 @@ pub struct CompletionRequest {
     #[serde(default = "default_stream")]
     pub stream: Option<bool>,
 
-    /// Include the log probabilities on the `logprobs` most likely tokens.
+    /// Include the log probabilities of the top tokens.
     #[serde(default)]
     pub logprobs: Option<u32>,
 
@@ -45,32 +53,33 @@ pub struct CompletionRequest {
     #[serde(default = "default_echo")]
     pub echo: Option<bool>,
 
-    /// The sequences where the API will stop generating further tokens.
+    /// Sequences where the API will stop generating further tokens.
     #[serde(default)]
     pub stop: Option<StopSequence>,
 
-    /// Penalizes repeated tokens (as per frequency).
+    /// Penalizes repeated tokens based on presence.
     #[serde(default = "default_presence_penalty")]
     pub presence_penalty: Option<f32>,
 
-    /// Penalizes repeated tokens (as per frequency).
+    /// Penalizes repeated tokens based on frequency.
     #[serde(default = "default_frequency_penalty")]
     pub frequency_penalty: Option<f32>,
 
-    /// Generates best_of completions server-side and returns the "best" one.
+    /// Generates `best_of` completions server-side and returns the best one.
     #[serde(default)]
     pub best_of: Option<i32>,
 
-    /// Modify the likelihood of specified tokens appearing in the completion.
+    /// Modifies the likelihood of specified tokens appearing in the completion.
     #[serde(default)]
     pub logit_bias: Option<HashMap<String, i32>>,
 
-    /// A unique identifier representing your end-user.
+    /// A unique identifier representing the end-user.
     #[serde(default)]
     pub user: Option<String>,
 }
 
 // Default values for optional parameters
+
 fn default_max_tokens() -> Option<u32> {
     Some(16)
 }
@@ -104,6 +113,13 @@ fn default_frequency_penalty() -> Option<f32> {
 }
 
 impl Default for CompletionRequest {
+    /// Provides default values for `CompletionRequest`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let default_request = CompletionRequest::default();
+    /// ```
     fn default() -> Self {
         Self {
             model: String::new(),
@@ -126,7 +142,9 @@ impl Default for CompletionRequest {
     }
 }
 
-/// The response from the Completions API.
+/// Represents a response from the Completions API.
+///
+/// Contains generated completions along with usage statistics.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompletionResponse {
     /// Unique identifier for the completion.
@@ -148,7 +166,9 @@ pub struct CompletionResponse {
     pub usage: Usage,
 }
 
-/// A single completion choice.
+/// Represents a single completion choice.
+///
+/// Contains the generated text and additional metadata.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Choice {
     /// The generated text.
@@ -157,7 +177,7 @@ pub struct Choice {
     /// The index of this choice in the returned list.
     pub index: i32,
 
-    /// The log probabilities of the tokens (if requested).
+    /// The log probabilities of the tokens, if requested.
     #[serde(default)]
     pub logprobs: Option<Logprobs>,
 
@@ -166,20 +186,27 @@ pub struct Choice {
     pub finish_reason: Option<String>,
 }
 
-/// Log probabilities of the tokens.
+/// Represents the log probabilities of tokens.
+///
+/// Provides detailed information about token generation probabilities.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Logprobs {
-    /// List of tokens
+    /// List of tokens generated.
     pub tokens: Vec<String>,
-    /// Log probability of each token
+
+    /// Log probability of each token.
     pub token_logprobs: Vec<f32>,
-    /// Indices of tokens in the text
+
+    /// Indices of tokens in the original text.
     pub text_offset: Vec<usize>,
-    /// Top logprobs for each token position
+
+    /// Top log probabilities for each token position.
     pub top_logprobs: Vec<HashMap<String, f32>>,
 }
 
-/// Usage statistics for the completion.
+/// Represents usage statistics for a completion.
+///
+/// Tracks the number of tokens consumed in the prompt and completion.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Usage {
     /// The number of tokens in the prompt.

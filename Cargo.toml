@@ -1,7 +1,7 @@
 [package]
 name = "openai-mock"
 version = "0.1.0"
-authors = ["Your Name <raymac@ievolution.com>"]
+authors = ["James T. Ray <raymac@ievolution.com>"]
 edition = "2021"
 description = "A Rust library to mock OpenAI's API for testing purposes."
 license = "MIT"

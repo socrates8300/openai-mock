@@ -1,3 +1,8 @@
+//! This module handles HTTP requests for generating text completions.
+//!
+//! It provides the `completions_handler` function, which processes incoming
+//! completion requests, validates them, and returns appropriate responses.
+
 use crate::models::{CompletionRequest, CompletionResponse, Usage};
 use crate::validators::{
     validate_temperature, validate_top_p, validate_n, validate_max_tokens,
@@ -11,6 +16,21 @@ use serde_json::json;
 use crate::utils::utils::{generate_uuid, get_current_timestamp};
 use crate::utils::choices::create_choices;
 
+/// Handles the `/completions` endpoint for generating text completions.
+///
+/// This asynchronous function processes a `CompletionRequest`, validates
+/// the required and optional fields, generates completion choices, and
+/// constructs a `CompletionResponse`. In case of validation errors, it
+/// returns a `BadRequest` response with relevant error messages.
+///
+/// # Parameters
+///
+/// - `req`: A JSON payload deserialized into `CompletionRequest`.
+///
+/// # Returns
+///
+/// An `HttpResponse` containing the `CompletionResponse` on success or
+/// an error message on failure.
 pub async fn completions_handler(
     req: web::Json<CompletionRequest>,
 ) -> impl Responder {
@@ -91,7 +111,18 @@ pub async fn completions_handler(
     HttpResponse::Ok().json(response)
 }
 
-/// Helper function to count tokens in a string (mock implementation).
+/// Counts the number of tokens in a given text.
+///
+/// This is a mock implementation that simply counts whitespace-separated
+/// words. In a real-world scenario, a proper tokenizer should be used.
+///
+/// # Parameters
+///
+/// - `text`: The input string to tokenize.
+///
+/// # Returns
+///
+/// The number of tokens as a `u32`.
 fn count_tokens(text: &str) -> u32 {
     // This is a placeholder. In a real scenario, you might use a tokenizer.
     text.split_whitespace().count() as u32
