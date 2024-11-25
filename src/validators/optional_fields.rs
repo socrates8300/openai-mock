@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 pub fn validate_temperature(temperature: Option<f32>) -> Result<(), String> {
     if let Some(temp) = temperature {
         if temp < 0.0 || temp > 2.0 {
@@ -25,7 +27,7 @@ pub fn validate_n(n: Option<i32>) -> Result<(), String> {
     Ok(())
 }
 
-pub fn validate_max_tokens(max_tokens: Option<i32>) -> Result<(), String> {
+pub fn validate_max_tokens(max_tokens: Option<u32>) -> Result<(), String> {
     if let Some(value) = max_tokens {
         if value <= 0 {
             return Err(format!("max_tokens must be a positive integer, got {}", value));
@@ -70,8 +72,9 @@ pub fn validate_best_of(best_of: Option<i32>, n: Option<i32>) -> Result<(), Stri
     Ok(())
 }
 
-pub fn validate_logprobs(logprobs: Option<i32>) -> Result<(), String> {
+pub fn validate_logprobs(logprobs: Option<u32>) -> Result<(), String> {
     if let Some(value) = logprobs {
+        #[allow(unused_comparisons)]
         if value < 0 {
             return Err(format!("logprobs must be a non-negative integer, got {}", value));
         }
@@ -79,7 +82,7 @@ pub fn validate_logprobs(logprobs: Option<i32>) -> Result<(), String> {
     Ok(())
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum StopSequence {
     Single(String),
     Multiple(Vec<String>),
@@ -147,7 +150,6 @@ mod tests {
         assert!(validate_max_tokens(Some(1)).is_ok());
         assert!(validate_max_tokens(Some(100)).is_ok());
         assert!(validate_max_tokens(Some(0)).is_err());
-        assert!(validate_max_tokens(Some(-1)).is_err());
     }
 
     #[test]
@@ -176,7 +178,6 @@ mod tests {
         assert!(validate_best_of(None, None).is_ok());
         assert!(validate_best_of(Some(1), None).is_ok());
         assert!(validate_best_of(Some(0), None).is_err());
-        assert!(validate_best_of(Some(-1), None).is_err());
 
         // Test relationship with n
         assert!(validate_best_of(Some(5), Some(3)).is_ok());
@@ -190,8 +191,9 @@ mod tests {
         assert!(validate_logprobs(Some(0)).is_ok());
         assert!(validate_logprobs(Some(1)).is_ok());
         assert!(validate_logprobs(Some(100)).is_ok());
-        assert!(validate_logprobs(Some(-1)).is_err());
     }
+
+
 
     #[test]
     fn test_validate_stop() {

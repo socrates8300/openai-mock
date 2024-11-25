@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use crate::validators::StopSequence;
 
 /// The request payload for the Completions API.
 #[derive(Debug, Deserialize)]
@@ -30,7 +31,7 @@ pub struct CompletionRequest {
 
     /// How many completions to generate for each prompt.
     #[serde(default = "default_n")]
-    pub n: Option<u32>,
+    pub n: Option<i32>,
 
     /// Whether to stream back partial progress.
     #[serde(default = "default_stream")]
@@ -46,7 +47,7 @@ pub struct CompletionRequest {
 
     /// The sequences where the API will stop generating further tokens.
     #[serde(default)]
-    pub stop: Option<Value>, // Can be a string or array of strings.
+    pub stop: Option<StopSequence>,
 
     /// Penalizes repeated tokens (as per frequency).
     #[serde(default = "default_presence_penalty")]
@@ -58,7 +59,7 @@ pub struct CompletionRequest {
 
     /// Generates best_of completions server-side and returns the "best" one.
     #[serde(default)]
-    pub best_of: Option<u32>,
+    pub best_of: Option<i32>,
 
     /// Modify the likelihood of specified tokens appearing in the completion.
     #[serde(default)]
@@ -82,7 +83,7 @@ fn default_top_p() -> Option<f32> {
     Some(1.0)
 }
 
-fn default_n() -> Option<u32> {
+fn default_n() -> Option<i32> {
     Some(1)
 }
 
@@ -154,7 +155,7 @@ pub struct Choice {
     pub text: String,
 
     /// The index of this choice in the returned list.
-    pub index: u32,
+    pub index: i32,
 
     /// The log probabilities of the tokens (if requested).
     #[serde(default)]
