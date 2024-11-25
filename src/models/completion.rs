@@ -102,6 +102,29 @@ fn default_frequency_penalty() -> Option<f32> {
     Some(0.0)
 }
 
+impl Default for CompletionRequest {
+    fn default() -> Self {
+        Self {
+            model: String::new(),
+            prompt: None,
+            suffix: None,
+            max_tokens: default_max_tokens(),
+            temperature: default_temperature(),
+            top_p: default_top_p(),
+            n: default_n(),
+            stream: default_stream(),
+            logprobs: None,
+            echo: default_echo(),
+            stop: None,
+            presence_penalty: default_presence_penalty(),
+            frequency_penalty: default_frequency_penalty(),
+            best_of: None,
+            logit_bias: None,
+            user: None,
+        }
+    }
+}
+
 /// The response from the Completions API.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CompletionResponse {
