@@ -1,35 +1,75 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 
+/// The request payload for the Completions API.
 #[derive(Debug, Deserialize)]
 pub struct CompletionRequest {
+    /// ID of the model to use.
     pub model: String,
-    pub prompt: Option<String>,
-    #[serde(default, rename = "suffix")]
+
+    /// The prompt(s) to generate completions for.
+    #[serde(default)]
+    pub prompt: Option<Value>, // Can be a string, array of strings, or null.
+
+    /// The suffix that comes after a completion of inserted text.
+    #[serde(default)]
     pub suffix: Option<String>,
-    #[serde(default = "default_max_tokens", rename = "max_tokens")]
+
+    /// The maximum number of tokens to generate.
+    #[serde(default = "default_max_tokens")]
     pub max_tokens: Option<u32>,
-    #[serde(default = "default_temperature", rename = "temperature")]
+
+    /// What sampling temperature to use.
+    #[serde(default = "default_temperature")]
     pub temperature: Option<f32>,
-    #[serde(default = "default_top_p", rename = "top_p")]
+
+    /// Nucleus sampling probability.
+    #[serde(default = "default_top_p")]
     pub top_p: Option<f32>,
-    #[serde(default = "default_n", rename = "n")]
+
+    /// How many completions to generate for each prompt.
+    #[serde(default = "default_n")]
     pub n: Option<u32>,
-    #[serde(default = "default_stream", rename = "stream")]
+
+    /// Whether to stream back partial progress.
+    #[serde(default = "default_stream")]
     pub stream: Option<bool>,
+
+    /// Include the log probabilities on the `logprobs` most likely tokens.
+    #[serde(default)]
     pub logprobs: Option<u32>,
-    #[serde(default = "default_echo", rename = "echo")]
+
+    /// Echo back the prompt in addition to the completion.
+    #[serde(default = "default_echo")]
     pub echo: Option<bool>,
-    pub stop: Option<Value>, // Can be a string or array of strings
-    #[serde(default = "default_presence_penalty", rename = "presence_penalty")]
+
+    /// The sequences where the API will stop generating further tokens.
+    #[serde(default)]
+    pub stop: Option<Value>, // Can be a string or array of strings.
+
+    /// Penalizes repeated tokens (as per frequency).
+    #[serde(default = "default_presence_penalty")]
     pub presence_penalty: Option<f32>,
-    #[serde(default = "default_frequency_penalty", rename = "frequency_penalty")]
+
+    /// Penalizes repeated tokens (as per frequency).
+    #[serde(default = "default_frequency_penalty")]
     pub frequency_penalty: Option<f32>,
+
+    /// Generates best_of completions server-side and returns the "best" one.
+    #[serde(default)]
     pub best_of: Option<u32>,
-    pub logit_bias: Option<Value>,
+
+    /// Modify the likelihood of specified tokens appearing in the completion.
+    #[serde(default)]
+    pub logit_bias: Option<HashMap<String, i32>>,
+
+    /// A unique identifier representing your end-user.
+    #[serde(default)]
     pub user: Option<String>,
 }
 
+// Default values for optional parameters
 fn default_max_tokens() -> Option<u32> {
     Some(16)
 }
@@ -62,27 +102,72 @@ fn default_frequency_penalty() -> Option<f32> {
     Some(0.0)
 }
 
-#[derive(Debug, Serialize)]
+/// The response from the Completions API.
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CompletionResponse {
+    /// Unique identifier for the completion.
     pub id: String,
+
+    /// The object type (e.g., "text_completion").
     pub object: String,
+
+    /// Creation time in epoch seconds.
     pub created: u64,
+
+    /// The model used for the completion.
     pub model: String,
+
+    /// The list of generated completions.
     pub choices: Vec<Choice>,
+
+    /// Usage statistics for the completion.
     pub usage: Usage,
 }
 
-#[derive(Debug, Serialize)]
+/// A single completion choice.
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Choice {
+    /// The generated text.
     pub text: String,
+
+    /// The index of this choice in the returned list.
     pub index: u32,
-    pub logprobs: Option<Value>,
+
+    /// The log probabilities of the tokens (if requested).
+    #[serde(default)]
+    pub logprobs: Option<Logprobs>,
+
+    /// The reason why the completion ended (e.g., "stop", "length").
+    #[serde(default)]
     pub finish_reason: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+/// Log probabilities of the tokens.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Logprobs {
+    /// The tokens generated.
+    pub tokens: Vec<String>,
+
+    /// The log probabilities of the tokens.
+    pub token_logprobs: Vec<f32>,
+
+    /// The top log probabilities of tokens.
+    #[serde(default)]
+    pub top_logprobs: Option<Vec<HashMap<String, f32>>>,
+
+    /// The character offset of each token.
+    pub text_offset: Vec<u32>,
+}
+
+/// Usage statistics for the completion.
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Usage {
+    /// The number of tokens in the prompt.
     pub prompt_tokens: u32,
+
+    /// The number of tokens in the completion.
     pub completion_tokens: u32,
+
+    /// The total number of tokens used.
     pub total_tokens: u32,
 }

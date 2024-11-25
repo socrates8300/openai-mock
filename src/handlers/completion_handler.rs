@@ -41,9 +41,9 @@ pub async fn completions_handler(
         model: req.model.clone(),
         choices,
         usage: Usage {
-            prompt_tokens: count_tokens(&prompt),
+            prompt_tokens: count_tokens(&prompt.to_string()),
             completion_tokens: max_tokens,
-            total_tokens: count_tokens(&prompt) + max_tokens,
+            total_tokens: count_tokens(&prompt.to_string()) + max_tokens,
         },
     };
     HttpResponse::Ok().json(response)
